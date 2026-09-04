@@ -1,32 +1,45 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Counter : MonoBehaviour
 {
     [SerializeField] private float _delay;
+    [SerializeField] private InputReader _inputReader;
 
-    private int _count;
+    public int Count { get; private set; }
+
+    public event Action AmountChanged;
+
     private Coroutine _coroutine;
     private WaitForSeconds _wait;
 
     private void Start()
     {
-        _count = 0;
+        Count = 0;
         _wait = new WaitForSeconds(_delay);
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        if (Input.GetMouseButtonDown(0))
+        _inputReader.MouseClicked += SwitchCountdown;
+    }
+
+    private void OnDisable()
+    {
+        _inputReader.MouseClicked -= SwitchCountdown;
+    }
+
+    private void SwitchCountdown()
+    {
+        if (_coroutine != null)
         {
-            if (_coroutine != null)
-            {
-                StopCoroutine(_coroutine);
-                _coroutine = null;
-            }
-            else
-                _coroutine = StartCoroutine(IncreaseCounter());
+            StopCoroutine(_coroutine);
+            _coroutine = null;
+        }
+        else
+        {
+            _coroutine = StartCoroutine(IncreaseCounter());
         }
     }
 
@@ -35,7 +48,8 @@ public class Counter : MonoBehaviour
         while (true)
         {
             yield return _wait;
-            Debug.Log(_count++);
+            Count++;
+            AmountChanged?.Invoke();
         }
     }
 }
